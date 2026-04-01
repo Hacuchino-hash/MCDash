@@ -1,0 +1,44 @@
+{
+  "port": 3000,
+  "siteName": "NodakMesh Dashboard",
+  "region": "FAR",
+  "regionName": "Fargo, ND",
+  "mqtt": {
+    "broker": "mqtt://localhost:1883",
+    "topic": "meshcore/FAR/+/packets",
+    "statusTopic": "meshcore/FAR/+/status"
+  },
+  "mqttSources": [
+    {
+      "name": "letsmesh-far",
+      "broker": "mqtts://mqtt.letsmesh.net:8883",
+      "topics": ["meshcore/FAR/+/packets", "meshcore/FAR/+/status"],
+      "iataFilter": ["FAR"],
+      "username": "",
+      "password": ""
+    }
+  ],
+  "channelKeys": {
+    "public": "8b3387e9c5cdea6ac9e5edbaa115cd72"
+  },
+  "coverage": {
+    "enabled": true,
+    "apiUrl": "https://meshmapper.net",
+    "apiKey": "",
+    "region": "far",
+    "syncIntervalSeconds": 3600,
+    "maxAgeDays": 30,
+    "cacheFile": "data/coverage-cache.json"
+  },
+  "leaderboards": {
+    "updateIntervalMinutes": 5,
+    "timeWindows": ["24h", "7d", "30d", "all"]
+  },
+  "health": {
+    "observerOfflineThresholdMinutes": 60,
+    "repeaterStaleThresholdHours": 24,
+    "snrDegradationThreshold": -15
+  },
+  "defaultMapCenter": [46.8772, -96.7898],
+  "defaultMapZoom": 10
+}
