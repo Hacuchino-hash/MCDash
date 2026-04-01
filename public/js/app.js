@@ -283,50 +283,8 @@ function updateActiveNav(path) {
   });
 }
 
-// ---- Theme Toggle (MT/MC) ----
-// MT = Meshtastic (emerald green, default)
-// MC = MeshCore (blue) via data-theme="mc"
-
-function initTheme() {
-  const saved = localStorage.getItem("theme");
-  if (saved === "mc") {
-    document.documentElement.setAttribute("data-theme", "mc");
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-  }
-  updateThemeToggleUI();
-}
-
-function updateThemeToggleUI() {
-  const isMC = document.documentElement.getAttribute("data-theme") === "mc";
-  const btnMT = document.getElementById("btn-mt");
-  const btnMC = document.getElementById("btn-mc");
-
-  if (btnMT) {
-    btnMT.className = "theme-toggle-btn" + (isMC ? "" : " active-mt");
-  }
-  if (btnMC) {
-    btnMC.className = "theme-toggle-btn" + (isMC ? " active-mc" : "");
-  }
-}
-
-function setTheme(theme) {
-  document.documentElement.classList.add("theme-transition");
-
-  if (theme === "mc") {
-    document.documentElement.setAttribute("data-theme", "mc");
-    localStorage.setItem("theme", "mc");
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-    localStorage.removeItem("theme");
-  }
-
-  updateThemeToggleUI();
-
-  setTimeout(() => {
-    document.documentElement.classList.remove("theme-transition");
-  }, 300);
-}
+// ---- Theme ----
+// Static MeshCore blue theme — no toggle needed
 
 // ---- Mobile Menu ----
 
@@ -405,13 +363,7 @@ export function showToast(message, type = "success", duration = 4000) {
 // ---- Initialize ----
 
 function init() {
-  initTheme();
   initMobileMenu();
-
-  const btnMT = document.getElementById("btn-mt");
-  const btnMC = document.getElementById("btn-mc");
-  if (btnMT) btnMT.addEventListener("click", () => setTheme("mt"));
-  if (btnMC) btnMC.addEventListener("click", () => setTheme("mc"));
 
   window.addEventListener("hashchange", navigate);
   navigate();

@@ -14,11 +14,11 @@
   --color-bg-tertiary: #1a1a1a;
   --color-bg-card: #141414;
 
-  /* Primary accent - Emerald green */
-  --color-accent: #10b981;
-  --color-accent-hover: #34d399;
-  --color-accent-glow: rgba(16, 185, 129, 0.25);
-  --color-accent-subtle: rgba(16, 185, 129, 0.1);
+  /* Primary accent - MeshCore blue */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-glow: rgba(59, 130, 246, 0.25);
+  --color-accent-subtle: rgba(59, 130, 246, 0.1);
 
   /* Secondary accent */
   --color-secondary: #d4a853;
@@ -33,7 +33,7 @@
   --color-border-hover: #2a2a2a;
 
   /* Status */
-  --color-success: #34d399;
+  --color-success: #60a5fa;
   --color-warning: #fbbf24;
   --color-error: #f87171;
 
@@ -45,15 +45,6 @@
   /* Font */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
-}
-
-/* ---- MeshCore Theme (Blue) ---- */
-html[data-theme="mc"] {
-  --color-accent: #3b82f6;
-  --color-accent-hover: #60a5fa;
-  --color-accent-glow: rgba(59, 130, 246, 0.25);
-  --color-accent-subtle: rgba(59, 130, 246, 0.1);
-  --color-success: #60a5fa;
 }
 
 /* ---- Base Reset ---- */

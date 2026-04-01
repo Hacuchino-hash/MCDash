@@ -20,11 +20,7 @@
           crossorigin="anonymous"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 
-  <script>
-    // Apply saved theme before render to prevent flash
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'mc') document.documentElement.setAttribute('data-theme', 'mc');
-  </script>
+  <script>document.documentElement.setAttribute('data-theme', 'mc');</script>
 </head>
 <body>
   <nav class="sidebar" id="sidebar">
@@ -37,10 +33,7 @@
         </svg>
         <span><span class="brand-nodak">NoDak</span><span class="brand-mesh">Mesh</span></span>
       </span>
-      <div class="theme-toggle-group" id="theme-toggle">
-        <button class="theme-toggle-btn" data-theme-value="" id="btn-mt">MT</button>
-        <button class="theme-toggle-btn" data-theme-value="mc" id="btn-mc">MC</button>
-      </div>
+      <span class="badge badge-blue" style="font-size:0.6rem;letter-spacing:0.08em;">MESHCORE</span>
     </div>
 
     <div class="nav-section-label">Dashboard</div>
