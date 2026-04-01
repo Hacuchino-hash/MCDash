@@ -1,0 +1,17 @@
+services:
+  dashboard:
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+      - "1883:1883"
+    volumes:
+      - meshcore-data:/app/data
+      - caddy-certs:/data/caddy
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+volumes:
+  meshcore-data:
+  caddy-certs:
