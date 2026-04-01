@@ -1,10 +1,12 @@
 // NodakMesh Dashboard - Node Map Page
 
-import { getNodes } from "../api.js";
+import { getNodes, getCoverage } from "../api.js";
 import { createMap } from "../components/map-base.js";
 
 let mapInstance = null;
 let nodes = [];
+let coverageMarkers = [];
+let coverageVisible = false;
 
 const ROLE_COLORS = {
   repeater: "#10b981",
@@ -18,12 +20,23 @@ const ROLE_LABELS = {
   companion: "Companion",
 };
 
+const COVERAGE_COLORS = {
+  BIDIR: "#10b981",
+  DISC: "#3b82f6",
+  TRACE: "#eab308",
+  TX: "#f97316",
+};
+
 function getRoleColor(role) {
   return ROLE_COLORS[role] || "#6b7280";
 }
 
 function getRoleLabel(role) {
   return ROLE_LABELS[role] || role || "Unknown";
+}
+
+function getCoverageColor(classification) {
+  return COVERAGE_COLORS[classification] || "#6b7280";
 }
 
 function formatLastSeen(ts) {
@@ -70,7 +83,7 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function buildToggleButtons(container, onToggleLabels, onToggleRoutes) {
+function buildToggleButtons(container, onToggleLabels, onToggleRoutes, onToggleCoverage) {
   const bar = document.createElement("div");
   bar.className = "flex gap-2 mb-3";
 
@@ -96,9 +109,115 @@ function buildToggleButtons(container, onToggleLabels, onToggleRoutes) {
     onToggleRoutes(routesVisible);
   });
 
+  const coverageBtn = document.createElement("button");
+  coverageBtn.className = "btn btn-secondary";
+  coverageBtn.textContent = "Show Coverage";
+
+  coverageBtn.addEventListener("click", () => {
+    coverageVisible = !coverageVisible;
+    coverageBtn.textContent = coverageVisible ? "Hide Coverage" : "Show Coverage";
+    onToggleCoverage(coverageVisible);
+  });
+
   bar.appendChild(labelBtn);
   bar.appendChild(routeBtn);
+  bar.appendChild(coverageBtn);
   container.appendChild(bar);
+}
+
+function clearCoverageMarkers() {
+  if (mapInstance == null) {
+    return;
+  }
+  const map = mapInstance.getMap();
+  coverageMarkers.forEach((m) => map.removeLayer(m));
+  coverageMarkers = [];
+}
+
+function extractCoveragePoints(data) {
+  if (data == null) {
+    return [];
+  }
+  if (Array.isArray(data.points)) {
+    return data.points;
+  }
+  if (Array.isArray(data.data)) {
+    return data.data;
+  }
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return [];
+}
+
+async function showCoverageOverlay() {
+  if (mapInstance == null) {
+    return;
+  }
+
+  clearCoverageMarkers();
+
+  try {
+    const response = await getCoverage();
+    const coverageData = response.data;
+    const points = extractCoveragePoints(coverageData);
+
+    if (points.length === 0) {
+      const map = mapInstance.getMap();
+      const center = map.getCenter();
+
+      const popup = L.popup()
+        .setLatLng([center.lat, center.lng])
+        .setContent(
+          '<div style="font-size:0.8125rem;text-align:center;padding:0.5rem;">' +
+          "Coverage data coming soon &mdash; start wardriving with the MeshMapper app!" +
+          "</div>",
+        )
+        .openOn(map);
+
+      coverageMarkers.push(popup);
+      return;
+    }
+
+    const map = mapInstance.getMap();
+
+    for (const point of points) {
+      const lat = point.latitude ?? point.lat;
+      const lng = point.longitude ?? point.lng ?? point.lon;
+
+      if (lat == null || lng == null) {
+        continue;
+      }
+
+      const classification = point.classification ?? point.type ?? "TX";
+      const color = getCoverageColor(classification);
+
+      const marker = L.circleMarker([lat, lng], {
+        radius: 5,
+        fillColor: color,
+        color: color,
+        weight: 1,
+        opacity: 0.7,
+        fillOpacity: 0.5,
+      }).addTo(map);
+
+      if (point.snr != null || classification) {
+        const popupContent = [
+          `<div style="font-size:0.75rem;">`,
+          `<div>Type: ${escapeHtml(classification)}</div>`,
+          point.snr != null ? `<div>SNR: ${point.snr} dB</div>` : "",
+          point.rssi != null ? `<div>RSSI: ${point.rssi} dBm</div>` : "",
+          `</div>`,
+        ].join("");
+
+        marker.bindPopup(popupContent);
+      }
+
+      coverageMarkers.push(marker);
+    }
+  } catch {
+    // Coverage fetch failed — silently ignore
+  }
 }
 
 export function mount(container) {
@@ -159,6 +278,14 @@ export function mount(container) {
         mapInstance.clearLines();
       }
     },
+    (show) => {
+      // Toggle coverage overlay
+      if (show) {
+        showCoverageOverlay();
+      } else {
+        clearCoverageMarkers();
+      }
+    },
   );
 
   // Legend
@@ -173,7 +300,16 @@ export function mount(container) {
     { color: "#6b7280", label: "Offline" },
   ];
 
-  legendItems.forEach((item) => {
+  const coverageLegendItems = [
+    { color: COVERAGE_COLORS.BIDIR, label: "BIDIR" },
+    { color: COVERAGE_COLORS.DISC, label: "DISC" },
+    { color: COVERAGE_COLORS.TRACE, label: "TRACE" },
+    { color: COVERAGE_COLORS.TX, label: "TX" },
+  ];
+
+  const allLegendItems = [...legendItems, ...coverageLegendItems];
+
+  allLegendItems.forEach((item) => {
     const el = document.createElement("span");
     el.className = "flex gap-1";
     el.style.alignItems = "center";
@@ -233,9 +369,11 @@ async function loadMapData(mapCard) {
 }
 
 export function unmount() {
+  clearCoverageMarkers();
   if (mapInstance) {
     mapInstance.destroy();
     mapInstance = null;
   }
   nodes = [];
+  coverageVisible = false;
 }

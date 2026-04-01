@@ -48,12 +48,31 @@ export default function repeaterRoutes(router, { nodeStore }) {
   );
 
   router.get("/repeaters/firmware", (_req, res) => {
+    const allNodes = nodeStore.getAll({ limit: 10000 });
+
+    const versionMap = new Map();
+
+    for (const node of allNodes) {
+      const version = node.firmwareVersion ?? node.firmware_version;
+      if (version == null || version === "") {
+        continue;
+      }
+
+      const existing = versionMap.get(version) ?? { version, count: 0, nodes: [] };
+      versionMap.set(version, {
+        ...existing,
+        count: existing.count + 1,
+        nodes: [...existing.nodes, { id: node.id, name: node.name || node.id }],
+      });
+    }
+
+    const versions = Array.from(versionMap.values()).sort(
+      (a, b) => b.count - a.count,
+    );
+
     res.json({
       success: true,
-      data: {
-        firmware: [],
-        message: "firmware inventory not yet implemented",
-      },
+      data: { versions },
     });
   });
 }

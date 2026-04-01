@@ -15,7 +15,7 @@ import topologyRoutes from "./topology.js";
  * Mounts all API route groups under /api prefix.
  *
  * @param {import('express').Application} app
- * @param {{ packetStore, nodeStore, observerStore, db }} deps
+ * @param {{ packetStore, nodeStore, observerStore, db, healthEngine?, topologyService?, leaderboardEngine?, coverageSync? }} deps
  */
 export function mountRoutes(app, deps) {
   if (app == null) {

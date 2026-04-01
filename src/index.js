@@ -12,6 +12,10 @@ import { mountRoutes } from "./routes/index.js";
 import { createWebSocketServer } from "./ws/server.js";
 import { createMqttHandler } from "./mqtt/handler.js";
 import { createMqttClient } from "./mqtt/client.js";
+import { createHealthEngine } from "./services/health-engine.js";
+import { createTopologyService } from "./services/topology.js";
+import { createLeaderboardEngine } from "./services/leaderboard-engine.js";
+import { createCoverageSync } from "./services/coverage-sync.js";
 import cors from "./middleware/cors.js";
 import errorHandler from "./middleware/error-handler.js";
 
@@ -42,19 +46,45 @@ async function boot() {
   const nodeStore = createNodeStore();
   const observerStore = createObserverStore();
 
-  // 5. Create Express app with middleware
+  // 5. Create services
+  const healthEngine = createHealthEngine({ observerStore, packetStore, nodeStore, config });
+  const topologyService = createTopologyService({ packetStore, nodeStore });
+  const leaderboardEngine = createLeaderboardEngine({ packetStore, nodeStore, db });
+  const coverageSync = createCoverageSync(config, db);
+
+  // Start coverage sync if enabled
+  if (config.coverage?.enabled) {
+    coverageSync.start();
+  }
+
+  // Start leaderboard refresh interval
+  const leaderboardIntervalMs = (config.leaderboards?.updateIntervalMinutes ?? 5) * 60 * 1000;
+  const leaderboardInterval = setInterval(() => {
+    leaderboardEngine.refreshAll();
+  }, leaderboardIntervalMs);
+
+  // 6. Create Express app with middleware
   const app = express();
   app.use(cors());
   app.use(express.json());
   app.use(express.static(join(PROJECT_ROOT, "public")));
 
-  // 6. Mount routes
-  mountRoutes(app, { packetStore, nodeStore, observerStore, db });
+  // 7. Mount routes
+  mountRoutes(app, {
+    packetStore,
+    nodeStore,
+    observerStore,
+    db,
+    healthEngine,
+    topologyService,
+    leaderboardEngine,
+    coverageSync,
+  });
 
   // Error handler must be last middleware
   app.use(errorHandler);
 
-  // 7. Start HTTP server
+  // 8. Start HTTP server
   const httpServer = createServer(app);
 
   await new Promise((resolve, reject) => {
@@ -67,10 +97,10 @@ async function boot() {
     });
   });
 
-  // 8. Create WebSocket server
+  // 9. Create WebSocket server
   const wss = createWebSocketServer(httpServer);
 
-  // 9. Create MQTT handler
+  // 10. Create MQTT handler
   const mqttHandler = createMqttHandler({
     packetStore,
     nodeStore,
@@ -80,7 +110,7 @@ async function boot() {
     channelKeys: config.channelKeys ?? {},
   });
 
-  // 10. Create MQTT client and wire events to handler
+  // 11. Create MQTT client and wire events to handler
   const mqttClient = createMqttClient(config);
 
   mqttClient.on("packet", ({ topic, payload }) => {
@@ -103,13 +133,21 @@ async function boot() {
     logError(`MQTT error on ${broker} (${label}): ${message}`);
   });
 
-  // 11. Log startup info
+  // 12. Log startup info
   log(`Server started on port ${config.port}`);
   log(`MQTT connected to ${config.mqtt.broker}`);
   log(`Region: ${config.region}${config.regionName ? ` (${config.regionName})` : ""}`);
   log(`Node.js ${process.version}`);
 
-  return { config, db, httpServer, wss, mqttClient };
+  return {
+    config,
+    db,
+    httpServer,
+    wss,
+    mqttClient,
+    coverageSync,
+    leaderboardInterval,
+  };
 }
 
 // --- Graceful shutdown ---
@@ -124,6 +162,18 @@ function createShutdown(resources) {
     shuttingDown = true;
 
     log("Shutting down...");
+
+    try {
+      resources.coverageSync.stop();
+    } catch (err) {
+      logError("Error stopping coverage sync:", err);
+    }
+
+    try {
+      clearInterval(resources.leaderboardInterval);
+    } catch (err) {
+      logError("Error clearing leaderboard interval:", err);
+    }
 
     try {
       // 1. Close MQTT client
