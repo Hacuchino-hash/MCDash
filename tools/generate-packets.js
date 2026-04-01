@@ -36,14 +36,56 @@ const BROKER_URL = cliArgs.broker;
 // ---------------------------------------------------------------------------
 
 const NODES = Object.freeze([
-  { name: "FAR_Downtown", id: "a1b2c3d4", lat: 46.8772, lng: -96.7898, role: 0x01 },
-  { name: "FAR_WestAcres", id: "b2c3d4e5", lat: 46.8580, lng: -96.8590, role: 0x02 },
-  { name: "FAR_Moorhead", id: "c3d4e5f6", lat: 46.8738, lng: -96.7678, role: 0x01 },
-  { name: "FAR_NDSU", id: "d4e5f6a7", lat: 46.8950, lng: -96.8020, role: 0x03 },
-  { name: "FAR_Airport", id: "e5f6a7b8", lat: 46.9207, lng: -96.8157, role: 0x01 },
-  { name: "FAR_SouthFargo", id: "f6a7b8c9", lat: 46.8350, lng: -96.7920, role: 0x02 },
-  { name: "FAR_NorthFargo", id: "a7b8c9d0", lat: 46.9310, lng: -96.7840, role: 0x03 },
-  { name: "FAR_WestFargo", id: "b8c9d0e1", lat: 46.8770, lng: -96.9000, role: 0x01 },
+  {
+    name: "FAR_Downtown",
+    id: "a1b2c3d4",
+    lat: 46.8772,
+    lng: -96.7898,
+    role: 0x01,
+  },
+  {
+    name: "FAR_WestAcres",
+    id: "b2c3d4e5",
+    lat: 46.858,
+    lng: -96.859,
+    role: 0x02,
+  },
+  {
+    name: "FAR_Moorhead",
+    id: "c3d4e5f6",
+    lat: 46.8738,
+    lng: -96.7678,
+    role: 0x01,
+  },
+  { name: "FAR_NDSU", id: "d4e5f6a7", lat: 46.895, lng: -96.802, role: 0x03 },
+  {
+    name: "FAR_Airport",
+    id: "e5f6a7b8",
+    lat: 46.9207,
+    lng: -96.8157,
+    role: 0x01,
+  },
+  {
+    name: "FAR_SouthFargo",
+    id: "f6a7b8c9",
+    lat: 46.835,
+    lng: -96.792,
+    role: 0x02,
+  },
+  {
+    name: "FAR_NorthFargo",
+    id: "a7b8c9d0",
+    lat: 46.931,
+    lng: -96.784,
+    role: 0x03,
+  },
+  {
+    name: "FAR_WestFargo",
+    id: "b8c9d0e1",
+    lat: 46.877,
+    lng: -96.9,
+    role: 0x01,
+  },
 ]);
 
 const OBSERVERS = Object.freeze([
@@ -64,12 +106,13 @@ const FLOOD_MESSAGES = Object.freeze([
   "Coverage check: can you hear me?",
 ]);
 
-// Packet type weights: flood 40%, advert 25%, direct 20%, trace 15%
+// Packet type weights: group_text 40%, advert 25%, text_msg 20%, trace 15%
+// Header byte = (version << 6) | (payloadType << 2) | routeType
 const PACKET_TYPE_WEIGHTS = Object.freeze([
-  { type: "flood", byte: 0x02, cumulative: 0.40 },
-  { type: "advert", byte: 0x01, cumulative: 0.65 },
-  { type: "direct", byte: 0x03, cumulative: 0.85 },
-  { type: "trace", byte: 0x04, cumulative: 1.00 },
+  { type: "group_text", payloadType: 0x05, routeType: 0x01, cumulative: 0.4 },
+  { type: "advert", payloadType: 0x04, routeType: 0x01, cumulative: 0.65 },
+  { type: "text_msg", payloadType: 0x02, routeType: 0x02, cumulative: 0.85 },
+  { type: "trace", payloadType: 0x09, routeType: 0x01, cumulative: 1.0 },
 ]);
 
 // ---------------------------------------------------------------------------
@@ -124,22 +167,27 @@ function stringToBytes(str) {
 // ---------------------------------------------------------------------------
 
 /**
- * Build a common MeshCore header (11 bytes).
- * [typeByte, flags, source(4), dest(4), hops]
+ * Build a MeshCore packet with single-byte header, path, and payload.
+ * Wire format: [header:1] [path_len:1] [path:N] [payload:M]
+ *
+ * Header byte = (version << 6) | (payloadType << 2) | routeType
+ * path_len = ((hashSize - 1) << 6) | (hashCount & 63)
  */
-function buildHeader(typeByte, sourceId, destId, hops) {
-  const header = new Uint8Array(11);
-  header[0] = typeByte;
-  header[1] = 0x00; // flags
+function buildPacket(payloadType, routeType, sourceId, destId, payload) {
+  const headerByte = (0 << 6) | (payloadType << 2) | routeType;
+  const hashSize = 4; // 4 bytes per hop hash
+  const hashCount = 2; // source + dest
+  const pathLen = ((hashSize - 1) << 6) | (hashCount & 63);
 
   const srcBytes = hexToBytesSafe(sourceId);
   const dstBytes = hexToBytesSafe(destId);
 
-  header.set(srcBytes.slice(0, 4), 2);
-  header.set(dstBytes.slice(0, 4), 6);
-  header[10] = hops;
-
-  return header;
+  return concatBytes(
+    new Uint8Array([headerByte, pathLen]),
+    srcBytes.slice(0, hashSize),
+    dstBytes.slice(0, hashSize),
+    payload,
+  );
 }
 
 function hexToBytesSafe(hex) {
@@ -164,61 +212,75 @@ function concatBytes(...arrays) {
 
 function buildAdvertPacket(sourceNode) {
   const destNode = pickRandom(NODES.filter((n) => n.id !== sourceNode.id));
-  const hops = randomInt(1, 4);
 
-  const header = buildHeader(0x01, sourceNode.id, destNode.id, hops);
-  const nameBytes = stringToBytes(sourceNode.name);
+  // Advert payload: 32-byte pubkey + 4-byte timestamp + 64-byte signature + appdata
+  const pubkey = new Uint8Array(32);
+  const srcBytes = hexToBytesSafe(sourceNode.id);
+  pubkey.set(srcBytes, 0); // Put node ID at start of pubkey
+
+  const timestamp = new Uint8Array(4);
+  const now = Math.floor(Date.now() / 1000);
+  timestamp[0] = now & 0xff;
+  timestamp[1] = (now >> 8) & 0xff;
+  timestamp[2] = (now >> 16) & 0xff;
+  timestamp[3] = (now >> 24) & 0xff;
+
+  const signature = new Uint8Array(64); // zeroed placeholder
+
+  // Appdata: flags(1) + lat(4) + lon(4) + features(2) + name
+  const flags = new Uint8Array([sourceNode.role]);
   const latBytes = float32ToBytes(sourceNode.lat);
   const lngBytes = float32ToBytes(sourceNode.lng);
-  const roleBytes = new Uint8Array([sourceNode.role]);
-  const fwBytes = stringToBytes("v2.1.3");
+  const features = new Uint8Array([0x00, 0x00]);
+  const nameBytes = stringToBytes(sourceNode.name);
 
-  return concatBytes(header, nameBytes, latBytes, lngBytes, roleBytes, fwBytes);
+  const payload = concatBytes(
+    pubkey,
+    timestamp,
+    signature,
+    flags,
+    latBytes,
+    lngBytes,
+    features,
+    nameBytes,
+  );
+  return buildPacket(0x04, 0x01, sourceNode.id, destNode.id, payload);
 }
 
-function buildFloodPacket(sourceNode) {
+function buildGroupTextPacket(sourceNode) {
   const destNode = pickRandom(NODES.filter((n) => n.id !== sourceNode.id));
-  const hops = randomInt(1, 4);
   const message = pickRandom(FLOOD_MESSAGES);
-
-  const header = buildHeader(0x02, sourceNode.id, destNode.id, hops);
   const messageBytes = stringToBytes(message);
 
-  return concatBytes(header, messageBytes);
+  return buildPacket(0x05, 0x01, sourceNode.id, destNode.id, messageBytes);
 }
 
-function buildDirectPacket(sourceNode) {
+function buildTextMsgPacket(sourceNode) {
   const destNode = pickRandom(NODES.filter((n) => n.id !== sourceNode.id));
-  const hops = randomInt(1, 3);
-
-  const header = buildHeader(0x03, sourceNode.id, destNode.id, hops);
-  const routeLength = new Uint8Array([0]); // no intermediate hops in payload
   const message = stringToBytes("Direct message test");
 
-  return concatBytes(header, routeLength, message);
+  return buildPacket(0x02, 0x02, sourceNode.id, destNode.id, message);
 }
 
 function buildTracePacket(sourceNode) {
   const destNode = pickRandom(NODES.filter((n) => n.id !== sourceNode.id));
-  const hops = randomInt(1, 4);
-
-  const header = buildHeader(0x04, sourceNode.id, destNode.id, hops);
   const isRequest = new Uint8Array([Math.random() > 0.5 ? 0x00 : 0x01]);
 
-  // Build a path of 1-3 random node prefixes
+  // Trace payload: direction byte + path node prefixes
   const pathNodeCount = randomInt(1, 3);
-  const pathParts = [];
+  const pathParts = [isRequest];
   for (let i = 0; i < pathNodeCount; i++) {
     pathParts.push(hexToBytesSafe(pickRandom(NODES).id));
   }
 
-  return concatBytes(header, isRequest, ...pathParts);
+  const payload = concatBytes(...pathParts);
+  return buildPacket(0x09, 0x01, sourceNode.id, destNode.id, payload);
 }
 
 const BUILDERS = Object.freeze({
   advert: buildAdvertPacket,
-  flood: buildFloodPacket,
-  direct: buildDirectPacket,
+  group_text: buildGroupTextPacket,
+  text_msg: buildTextMsgPacket,
   trace: buildTracePacket,
 });
 
@@ -232,14 +294,20 @@ async function main() {
   await new Promise((resolve, reject) => {
     client.on("connect", resolve);
     client.on("error", (err) => {
-      reject(new Error(`Failed to connect to MQTT broker at ${BROKER_URL}: ${err.message}`));
+      reject(
+        new Error(
+          `Failed to connect to MQTT broker at ${BROKER_URL}: ${err.message}`,
+        ),
+      );
     });
   });
 
   console.log(`[Generator] Connected to ${BROKER_URL}`);
-  console.log(`[Generator] Sending ${TOTAL_COUNT} packets at ${INTERVAL_MS}ms intervals\n`);
+  console.log(
+    `[Generator] Sending ${TOTAL_COUNT} packets at ${INTERVAL_MS}ms intervals\n`,
+  );
 
-  const summary = { advert: 0, flood: 0, direct: 0, trace: 0 };
+  const summary = { advert: 0, group_text: 0, text_msg: 0, trace: 0 };
   let sent = 0;
 
   for (let i = 0; i < TOTAL_COUNT; i++) {

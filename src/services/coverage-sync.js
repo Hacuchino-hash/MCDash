@@ -61,21 +61,51 @@ function writeCacheToDb(db, region, data) {
   }
 }
 
+/**
+ * Fetch coverage data from MeshMapper API.
+ * Endpoint: GET https://meshmapper.net/coverage.php?key=API_KEY
+ * Reference: https://wiki.meshmapper.net/coverage-api/
+ *
+ * Response shape:
+ * {
+ *   success: boolean,
+ *   region: string,
+ *   grid_size: { lat, lon },
+ *   generated_at: number,
+ *   total_squares: number,
+ *   grid_squares: [{ grid_id, bounds, coverage_type, fill_color, border_color, snr, timestamp }]
+ * }
+ */
 async function fetchFromApi(apiUrl, region, apiKey) {
-  const url = `${apiUrl}/api/v1/coverage?region=${encodeURIComponent(region)}`;
-
-  const headers = { "Content-Type": "application/json" };
-  if (apiKey) {
-    headers["Authorization"] = `Bearer ${apiKey}`;
+  if (!apiKey) {
+    throw new Error(
+      "MeshMapper API key is required (set coverage.apiKey in config)",
+    );
   }
 
-  const response = await fetch(url, { headers, signal: AbortSignal.timeout(15_000) });
+  const url = `${apiUrl}/coverage.php?key=${encodeURIComponent(apiKey)}`;
+
+  const response = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (response.status === 429) {
+    throw new Error("MeshMapper API rate limit exceeded");
+  }
 
   if (!response.ok) {
     throw new Error(`API returned ${response.status}`);
   }
 
   const json = await response.json();
+
+  if (json.success === false) {
+    throw new Error(
+      json.error || "MeshMapper API returned unsuccessful response",
+    );
+  }
+
   return json;
 }
 
@@ -98,7 +128,8 @@ export function createCoverageSync(config, db) {
   const apiUrl = coverageConfig.apiUrl ?? "";
   const apiKey = coverageConfig.apiKey ?? "";
   const region = coverageConfig.region ?? config.region ?? "US";
-  const syncIntervalSeconds = coverageConfig.syncIntervalSeconds ?? DEFAULT_SYNC_INTERVAL_SECONDS;
+  const syncIntervalSeconds =
+    coverageConfig.syncIntervalSeconds ?? DEFAULT_SYNC_INTERVAL_SECONDS;
   const cacheFile = coverageConfig.cacheFile ?? DEFAULT_CACHE_FILE;
 
   let cachedData = null;
@@ -127,13 +158,9 @@ export function createCoverageSync(config, db) {
         return cachedData;
       }
 
-      const pointCount = Array.isArray(data.points)
-        ? data.points.length
-        : Array.isArray(data.data)
-          ? data.data.length
-          : Array.isArray(data)
-            ? data.length
-            : 0;
+      const pointCount =
+        data.total_squares ??
+        (Array.isArray(data.grid_squares) ? data.grid_squares.length : 0);
 
       cachedData = data;
 

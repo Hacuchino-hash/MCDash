@@ -11,10 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mosquitto \
     supervisor \
     curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Caddy
-RUN curl -fsSL https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_amd64.tar.gz \
+# Install Caddy (auto-detect architecture)
+RUN ARCH=$(dpkg --print-architecture) && \
+    case "$ARCH" in \
+      amd64) CADDY_ARCH="amd64" ;; \
+      arm64) CADDY_ARCH="arm64" ;; \
+      *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://github.com/caddyserver/caddy/releases/download/v2.8.4/caddy_2.8.4_linux_${CADDY_ARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin/
 
 WORKDIR /app

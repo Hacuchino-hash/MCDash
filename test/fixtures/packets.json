@@ -1,22 +1,30 @@
 {
   "advert": {
-    "description": "Valid advert packet: type=0x01, flags=0x00, source=aabbccdd, dest=11223344, hops=2, payload='Node1' + lat/lon floats + role=repeater(0x01) + firmware 'v1.2'",
-    "hex": "0100aabbccdd11223344024e6f64653100000048420000a0410100312e3200"
+    "description": "Advert packet: header byte = (0<<6)|(0x04<<2)|(0x01) = 0x11 (version 0, ADVERT, FLOOD route), path_len=0x41 (hashSize=2, count=1), 2-byte hop, then 32-byte pubkey + 4-byte ts + 64-byte sig + appdata(flags+lat+lon+features+name)",
+    "hex": "110141aabb0102030405060708091011121314151617181920212223242526272829303132f0d23e6600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000484200c0974100014e6f64653100"
   },
-  "flood": {
-    "description": "Valid flood packet: type=0x02, flags=0x00, source=deadbeef, dest=ffffffff, hops=5, payload has channel(3-byte 'gen') + message 'hello'",
-    "hex": "0200deadbeefffffffff050367656e68656c6c6f"
+  "group_text": {
+    "description": "Group text: header = (0<<6)|(0x05<<2)|(0x01) = 0x15 (GRP_TXT, FLOOD route), path_len=0x42 (hashSize=2, count=2), two 2-byte hops, then payload 'hello'",
+    "hex": "150142aabbccdd68656c6c6f"
   },
-  "direct": {
-    "description": "Valid direct packet: type=0x03, flags=0x00, source=cafebabe, dest=12345678, hops=1, payload routeLength=0 + message 'Hi!'",
-    "hex": "0300cafebabe12345678010048692100"
+  "direct_text": {
+    "description": "Text message: header = (0<<6)|(0x02<<2)|(0x02) = 0x0a (TXT_MSG, DIRECT route), path_len=0x42 (hashSize=2, count=2), payload 'Hi!'",
+    "hex": "0a0142aabbccdd48692100"
   },
   "trace": {
-    "description": "Valid trace packet: type=0x04, flags=0x00, source=a1b2c3d4, dest=e5f6a7b8, hops=3, payload direction=request(0x00) + two 4-byte prefixes",
-    "hex": "0400a1b2c3d4e5f6a7b80300aabbccddeeff0011"
+    "description": "Trace packet: header = (0<<6)|(0x09<<2)|(0x01) = 0x25 (TRACE, FLOOD route), path_len=0x42 (hashSize=2, count=2), then trace payload",
+    "hex": "250142aabbccdd00aabb"
+  },
+  "ack": {
+    "description": "ACK packet: header = (0<<6)|(0x03<<2)|(0x02) = 0x0e (ACK, DIRECT route), path_len=0x41 (hashSize=2, count=1)",
+    "hex": "0e0141aabb"
+  },
+  "transport_flood": {
+    "description": "Transport flood: header = (0<<6)|(0x05<<2)|(0x00) = 0x14, has 4-byte transport codes, path_len=0x41, then payload",
+    "hex": "140100020003004141aabb746573746d7367"
   },
   "malformed": {
-    "description": "Too short to contain a valid header (only 5 bytes)",
-    "hex": "01deadbeef00"
+    "description": "Too short — only 1 byte, missing path_len",
+    "hex": "11"
   }
 }

@@ -25,6 +25,9 @@ const COVERAGE_COLORS = {
   DISC: "#3b82f6",
   TRACE: "#eab308",
   TX: "#f97316",
+  RX: "#a855f7",
+  DEAD: "#6b7280",
+  DROP: "#ef4444",
 };
 
 function getRoleColor(role) {
@@ -83,7 +86,12 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-function buildToggleButtons(container, onToggleLabels, onToggleRoutes, onToggleCoverage) {
+function buildToggleButtons(
+  container,
+  onToggleLabels,
+  onToggleRoutes,
+  onToggleCoverage,
+) {
   const bar = document.createElement("div");
   bar.className = "flex gap-2 mb-3";
 
@@ -115,7 +123,9 @@ function buildToggleButtons(container, onToggleLabels, onToggleRoutes, onToggleC
 
   coverageBtn.addEventListener("click", () => {
     coverageVisible = !coverageVisible;
-    coverageBtn.textContent = coverageVisible ? "Hide Coverage" : "Show Coverage";
+    coverageBtn.textContent = coverageVisible
+      ? "Hide Coverage"
+      : "Show Coverage";
     onToggleCoverage(coverageVisible);
   });
 
@@ -134,19 +144,14 @@ function clearCoverageMarkers() {
   coverageMarkers = [];
 }
 
+/**
+ * Extract coverage grid squares from MeshMapper API response.
+ * Response shape: { grid_squares: [{ grid_id, bounds, coverage_type, fill_color, snr }] }
+ */
 function extractCoveragePoints(data) {
-  if (data == null) {
-    return [];
-  }
-  if (Array.isArray(data.points)) {
-    return data.points;
-  }
-  if (Array.isArray(data.data)) {
-    return data.data;
-  }
-  if (Array.isArray(data)) {
-    return data;
-  }
+  if (data == null) return [];
+  if (Array.isArray(data.grid_squares)) return data.grid_squares;
+  if (Array.isArray(data)) return data;
   return [];
 }
 
@@ -170,8 +175,8 @@ async function showCoverageOverlay() {
         .setLatLng([center.lat, center.lng])
         .setContent(
           '<div style="font-size:0.8125rem;text-align:center;padding:0.5rem;">' +
-          "Coverage data coming soon &mdash; start wardriving with the MeshMapper app!" +
-          "</div>",
+            "Coverage data coming soon &mdash; start wardriving with the MeshMapper app!" +
+            "</div>",
         )
         .openOn(map);
 
@@ -181,37 +186,59 @@ async function showCoverageOverlay() {
 
     const map = mapInstance.getMap();
 
-    for (const point of points) {
-      const lat = point.latitude ?? point.lat;
-      const lng = point.longitude ?? point.lng ?? point.lon;
+    for (const square of points) {
+      // MeshMapper grid squares use bounds: { south, west, north, east }
+      const bounds = square.bounds;
+      let lat, lng;
 
-      if (lat == null || lng == null) {
-        continue;
+      if (bounds && bounds.south != null && bounds.west != null) {
+        lat = (bounds.south + bounds.north) / 2;
+        lng = (bounds.west + bounds.east) / 2;
+      } else {
+        lat = square.latitude ?? square.lat;
+        lng = square.longitude ?? square.lng ?? square.lon;
       }
 
-      const classification = point.classification ?? point.type ?? "TX";
-      const color = getCoverageColor(classification);
+      if (lat == null || lng == null) continue;
 
-      const marker = L.circleMarker([lat, lng], {
-        radius: 5,
-        fillColor: color,
-        color: color,
-        weight: 1,
-        opacity: 0.7,
-        fillOpacity: 0.5,
-      }).addTo(map);
+      const coverageType = square.coverage_type ?? square.type ?? "TX";
+      const color = square.fill_color ?? getCoverageColor(coverageType);
 
-      if (point.snr != null || classification) {
-        const popupContent = [
-          `<div style="font-size:0.75rem;">`,
-          `<div>Type: ${escapeHtml(classification)}</div>`,
-          point.snr != null ? `<div>SNR: ${point.snr} dB</div>` : "",
-          point.rssi != null ? `<div>RSSI: ${point.rssi} dBm</div>` : "",
-          `</div>`,
-        ].join("");
-
-        marker.bindPopup(popupContent);
+      // Render as rectangle if bounds available, circle otherwise
+      let marker;
+      if (bounds) {
+        marker = L.rectangle(
+          [
+            [bounds.south, bounds.west],
+            [bounds.north, bounds.east],
+          ],
+          {
+            fillColor: color,
+            color: square.border_color ?? color,
+            weight: 1,
+            opacity: 0.7,
+            fillOpacity: 0.4,
+          },
+        ).addTo(map);
+      } else {
+        marker = L.circleMarker([lat, lng], {
+          radius: 5,
+          fillColor: color,
+          color,
+          weight: 1,
+          opacity: 0.7,
+          fillOpacity: 0.5,
+        }).addTo(map);
       }
+
+      const popupContent = [
+        `<div style="font-size:0.75rem;">`,
+        `<div>Type: ${escapeHtml(coverageType)}</div>`,
+        square.snr != null ? `<div>SNR: ${square.snr} dB</div>` : "",
+        square.grid_id ? `<div>Grid: ${escapeHtml(square.grid_id)}</div>` : "",
+        `</div>`,
+      ].join("");
+      marker.bindPopup(popupContent);
 
       coverageMarkers.push(marker);
     }
@@ -322,7 +349,8 @@ export function mount(container) {
   // Map container
   const mapCard = document.createElement("div");
   mapCard.className = "card";
-  mapCard.style.cssText = "padding:0;overflow:hidden;height:60vh;min-height:400px;";
+  mapCard.style.cssText =
+    "padding:0;overflow:hidden;height:60vh;min-height:400px;";
   container.appendChild(mapCard);
 
   // Load data and initialize map
