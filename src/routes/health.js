@@ -21,9 +21,9 @@ function getVersion() {
 
 /**
  * @param {import('express').Router} router
- * @param {{ nodeStore, observerStore }} deps
+ * @param {{ nodeStore, observerStore, healthEngine?: object }} deps
  */
-export default function healthRoutes(router, { nodeStore, observerStore }) {
+export default function healthRoutes(router, { nodeStore, observerStore, healthEngine }) {
   router.get("/health", (_req, res) => {
     const uptime = process.uptime();
     const version = getVersion();
@@ -35,6 +35,26 @@ export default function healthRoutes(router, { nodeStore, observerStore }) {
       totalObservers: observerStore.getCount(),
     };
 
+    // Use health engine if available, otherwise return basic data
+    if (healthEngine != null) {
+      const healthScore = healthEngine.getHealthScore();
+      const alerts = healthEngine.getAlerts();
+
+      return res.json({
+        success: true,
+        data: {
+          status: healthScore.status,
+          score: healthScore.score,
+          components: healthScore.components,
+          uptime,
+          version,
+          meshHealth,
+          alerts,
+          timestamp: healthScore.timestamp,
+        },
+      });
+    }
+
     res.json({
       success: true,
       data: {
@@ -43,6 +63,36 @@ export default function healthRoutes(router, { nodeStore, observerStore }) {
         version,
         meshHealth,
       },
+    });
+  });
+
+  router.get("/health/history", (_req, res) => {
+    if (healthEngine != null) {
+      const history = healthEngine.getHealthHistory();
+      return res.json({
+        success: true,
+        data: history,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: [],
+    });
+  });
+
+  router.get("/health/alerts", (_req, res) => {
+    if (healthEngine != null) {
+      const alerts = healthEngine.getAlerts();
+      return res.json({
+        success: true,
+        data: alerts,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: [],
     });
   });
 }
