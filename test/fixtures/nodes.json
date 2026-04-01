@@ -1,0 +1,52 @@
+[
+  {
+    "id": "node-fargo-01",
+    "name": "Fargo Repeater Alpha",
+    "role": "repeater",
+    "latitude": 46.8772,
+    "longitude": -96.7898,
+    "firmwareVersion": "1.2.0",
+    "firstSeen": "2026-03-01T10:00:00.000Z",
+    "lastSeen": "2026-04-01T08:00:00.000Z"
+  },
+  {
+    "id": "node-moorhead-01",
+    "name": "Moorhead Room Server",
+    "role": "room_server",
+    "latitude": 46.8738,
+    "longitude": -96.7678,
+    "firmwareVersion": "1.2.0",
+    "firstSeen": "2026-03-01T11:00:00.000Z",
+    "lastSeen": "2026-04-01T07:45:00.000Z"
+  },
+  {
+    "id": "node-bismarck-01",
+    "name": "Bismarck Repeater Bravo",
+    "role": "repeater",
+    "latitude": 46.8083,
+    "longitude": -100.7837,
+    "firmwareVersion": "1.1.5",
+    "firstSeen": "2026-02-15T09:00:00.000Z",
+    "lastSeen": "2026-03-31T22:00:00.000Z"
+  },
+  {
+    "id": "node-wahpeton-01",
+    "name": "Wahpeton Companion",
+    "role": "companion",
+    "latitude": 46.2652,
+    "longitude": -96.6059,
+    "firmwareVersion": "1.2.1",
+    "firstSeen": "2026-03-10T14:00:00.000Z",
+    "lastSeen": "2026-04-01T06:30:00.000Z"
+  },
+  {
+    "id": "node-grandforks-01",
+    "name": "Grand Forks Room Server",
+    "role": "room_server",
+    "latitude": 47.9253,
+    "longitude": -97.0329,
+    "firmwareVersion": "1.2.0",
+    "firstSeen": "2026-03-05T08:00:00.000Z",
+    "lastSeen": "2026-04-01T09:00:00.000Z"
+  }
+]

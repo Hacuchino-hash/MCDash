@@ -1,0 +1,22 @@
+{
+  "advert": {
+    "description": "Valid advert packet: type=0x01, flags=0x00, source=aabbccdd, dest=11223344, hops=2, payload='Node1' + lat/lon floats + role=repeater(0x01) + firmware 'v1.2'",
+    "hex": "0100aabbccdd11223344024e6f64653100000048420000a0410100312e3200"
+  },
+  "flood": {
+    "description": "Valid flood packet: type=0x02, flags=0x00, source=deadbeef, dest=ffffffff, hops=5, payload has channel(3-byte 'gen') + message 'hello'",
+    "hex": "0200deadbeefffffffff050367656e68656c6c6f"
+  },
+  "direct": {
+    "description": "Valid direct packet: type=0x03, flags=0x00, source=cafebabe, dest=12345678, hops=1, payload routeLength=0 + message 'Hi!'",
+    "hex": "0300cafebabe12345678010048692100"
+  },
+  "trace": {
+    "description": "Valid trace packet: type=0x04, flags=0x00, source=a1b2c3d4, dest=e5f6a7b8, hops=3, payload direction=request(0x00) + two 4-byte prefixes",
+    "hex": "0400a1b2c3d4e5f6a7b80300aabbccddeeff0011"
+  },
+  "malformed": {
+    "description": "Too short to contain a valid header (only 5 bytes)",
+    "hex": "01deadbeef00"
+  }
+}
