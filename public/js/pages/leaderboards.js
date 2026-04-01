@@ -105,7 +105,7 @@ function renderTabBar(parent) {
   const tabBar = document.createElement("div");
   tabBar.style.cssText = `
     display:flex;gap:0.5rem;margin-bottom:1.5rem;
-    background:var(--surface);border-radius:var(--radius);padding:0.25rem;
+    background:var(--surface);border-radius:var(--radius-sm);padding:0.25rem;
   `;
 
   for (const tw of TIME_WINDOWS) {
@@ -206,7 +206,7 @@ function renderLeaderboardTable(parent, boardName, entries, valueFormatter) {
     const row = document.createElement("div");
     row.style.cssText = `
       display:flex;align-items:center;gap:0.75rem;
-      padding:0.5rem 0;border-bottom:1px solid var(--border);
+      padding:0.5rem 0;border-bottom:1px solid var(--color-border);
       font-size:0.8125rem;
     `;
 
@@ -220,7 +220,7 @@ function renderLeaderboardTable(parent, boardName, entries, valueFormatter) {
     rank.textContent = rankStyle ? rankStyle.emoji : `#${entry.rank}`;
 
     const name = document.createElement("span");
-    name.style.cssText = "flex:1;color:var(--text-primary);font-weight:500;";
+    name.style.cssText = "flex:1;color:var(--color-text-primary);font-weight:500;";
     name.textContent = getNodeNames(entry);
 
     const value = document.createElement("span");

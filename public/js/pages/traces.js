@@ -80,7 +80,7 @@ function renderTimeline(parent, hops) {
     const row = document.createElement("div");
     row.style.cssText = `
       display:flex;align-items:center;gap:0.75rem;
-      padding:0.625rem 0;border-bottom:1px solid var(--border);
+      padding:0.625rem 0;border-bottom:1px solid var(--color-border);
       font-size:0.8125rem;
     `;
 
@@ -101,7 +101,7 @@ function renderTimeline(parent, hops) {
     info.style.cssText = "flex:1;";
 
     const observerName = document.createElement("div");
-    observerName.style.cssText = "font-weight:500;color:var(--text-primary);";
+    observerName.style.cssText = "font-weight:500;color:var(--color-text-primary);";
     observerName.textContent = hop.observer || hop.observerId || `Hop ${i + 1}`;
 
     const details = document.createElement("div");
@@ -142,7 +142,7 @@ function renderMapVisualization(parent, hops) {
   card.appendChild(title);
 
   const mapContainer = document.createElement("div");
-  mapContainer.style.cssText = "height:400px;border-radius:var(--radius);overflow:hidden;";
+  mapContainer.style.cssText = "height:400px;border-radius:var(--radius-sm);overflow:hidden;";
   card.appendChild(mapContainer);
   parent.appendChild(card);
 

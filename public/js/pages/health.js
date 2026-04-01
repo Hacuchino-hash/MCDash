@@ -67,7 +67,7 @@ function renderComponentBars(container, components) {
     row.appendChild(labelRow);
 
     const barBg = document.createElement("div");
-    barBg.style.cssText = "height:8px;border-radius:4px;background:var(--border);overflow:hidden;";
+    barBg.style.cssText = "height:8px;border-radius:4px;background:var(--color-border);overflow:hidden;";
 
     const barFill = document.createElement("div");
     const color = value >= 80 ? "#10b981" : value >= 50 ? "#f59e0b" : "#ef4444";
@@ -103,7 +103,7 @@ function renderAlerts(container, alerts) {
     const row = document.createElement("div");
     row.style.cssText = `
       display:flex;align-items:flex-start;gap:0.75rem;
-      padding:0.625rem 0;border-bottom:1px solid var(--border);
+      padding:0.625rem 0;border-bottom:1px solid var(--color-border);
       font-size:0.8125rem;
     `;
 
@@ -115,7 +115,7 @@ function renderAlerts(container, alerts) {
 
     const message = document.createElement("span");
     message.textContent = alert.message;
-    message.style.cssText = "flex:1;color:var(--text-primary);";
+    message.style.cssText = "flex:1;color:var(--color-text-primary);";
 
     const time = document.createElement("span");
     time.textContent = formatTimestamp(alert.timestamp);

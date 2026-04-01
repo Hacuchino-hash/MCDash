@@ -90,7 +90,7 @@ function buildHeader(container, node) {
 
     const keyValue = document.createElement("code");
     keyValue.textContent = truncateKey(node.publicKey);
-    keyValue.style.cssText = "background:var(--bg-secondary);padding:0.125rem 0.375rem;border-radius:4px;";
+    keyValue.style.cssText = "background:var(--color-bg-secondary);padding:0.125rem 0.375rem;border-radius:4px;";
     keyRow.appendChild(keyValue);
 
     const copyBtn = document.createElement("button");

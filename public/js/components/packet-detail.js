@@ -100,7 +100,7 @@ export function createPacketDetail(container, packet) {
     label.textContent = item.label;
 
     const value = document.createElement("div");
-    value.style.color = "var(--text-primary)";
+    value.style.color = "var(--color-text-primary)";
     value.textContent = item.value;
 
     cell.appendChild(label);
@@ -122,14 +122,14 @@ export function createPacketDetail(container, packet) {
 
     const fieldList = document.createElement("div");
     fieldList.style.cssText = `
-      background:var(--bg-elevated);border-radius:var(--radius);padding:0.75rem;
+      background:var(--color-bg-tertiary);border-radius:var(--radius-sm);padding:0.75rem;
       font-size:0.8125rem;font-family:var(--font-mono);
     `;
 
     Object.entries(packet.decodedPayload).forEach(([key, val]) => {
       const row = document.createElement("div");
       row.style.cssText = "display:flex;gap:0.75rem;padding:0.125rem 0;";
-      row.innerHTML = `<span style="color:var(--accent-cyan);">${escapeHtml(key)}:</span><span style="color:var(--text-primary);">${escapeHtml(String(val))}</span>`;
+      row.innerHTML = `<span style="color:var(--color-accent-hover);">${escapeHtml(key)}:</span><span style="color:var(--color-text-primary);">${escapeHtml(String(val))}</span>`;
       fieldList.appendChild(row);
     });
 
@@ -153,9 +153,9 @@ export function createPacketDetail(container, packet) {
 
     const hexPre = document.createElement("pre");
     hexPre.style.cssText = `
-      background:var(--bg-elevated);border-radius:var(--radius);padding:0.75rem;
+      background:var(--color-bg-tertiary);border-radius:var(--radius-sm);padding:0.75rem;
       font-size:0.75rem;font-family:var(--font-mono);overflow-x:auto;line-height:1.6;
-      color:var(--text-primary);
+      color:var(--color-text-primary);
     `;
 
     const dumpRows = buildHexDump(rawHex);

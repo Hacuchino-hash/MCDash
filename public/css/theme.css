@@ -1,43 +1,59 @@
-/* NodakMesh Dark Theme */
+/* NodakMesh Dashboard Theme
+ * Matches NodakMesh.org design system exactly.
+ * Default: Meshtastic (emerald green)
+ * MC toggle: MeshCore (blue) via data-theme="mc"
+ */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ---- Default Theme: Meshtastic (Emerald Green) ---- */
 :root {
-  --bg-primary: #0a0f1a;
-  --bg-surface: #111827;
-  --bg-elevated: #1e293b;
-  --border: #1e293b;
-  --text-primary: #e5e7eb;
-  --text-secondary: #9ca3af;
-  --accent-green: #10b981;
-  --accent-cyan: #06b6d4;
-  --accent-amber: #f59e0b;
-  --accent-red: #ef4444;
-  --radius: 8px;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  --font-mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono",
-    "Cascadia Code", Menlo, Monaco, Consolas, monospace;
-  --transition-speed: 200ms;
-  --scrollbar-thumb: #334155;
-  --scrollbar-track: #0a0f1a;
-  --selection-bg: #10b98140;
-  --selection-text: #e5e7eb;
+  /* Backgrounds */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #111111;
+  --color-bg-tertiary: #1a1a1a;
+  --color-bg-card: #141414;
+
+  /* Primary accent - Emerald green */
+  --color-accent: #10b981;
+  --color-accent-hover: #34d399;
+  --color-accent-glow: rgba(16, 185, 129, 0.25);
+  --color-accent-subtle: rgba(16, 185, 129, 0.1);
+
+  /* Secondary accent */
+  --color-secondary: #d4a853;
+
+  /* Text */
+  --color-text-primary: #f0f4f8;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Borders */
+  --color-border: #1f1f1f;
+  --color-border-hover: #2a2a2a;
+
+  /* Status */
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+
+  /* Layout */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition-speed: 0.3s;
+
+  /* Font */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
 }
 
-[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --border: #e2e8f0;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --accent-green: #059669;
-  --accent-cyan: #0891b2;
-  --accent-amber: #d97706;
-  --accent-red: #dc2626;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-track: #f8fafc;
-  --selection-bg: #059669;
-  --selection-text: #ffffff;
+/* ---- MeshCore Theme (Blue) ---- */
+html[data-theme="mc"] {
+  --color-accent: #3b82f6;
+  --color-accent-hover: #60a5fa;
+  --color-accent-glow: rgba(59, 130, 246, 0.25);
+  --color-accent-subtle: rgba(59, 130, 246, 0.1);
+  --color-success: #60a5fa;
 }
 
 /* ---- Base Reset ---- */
@@ -59,23 +75,21 @@ html {
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
   line-height: 1.6;
   min-height: 100vh;
-  transition:
-    background-color var(--transition-speed) ease,
-    color var(--transition-speed) ease;
+  transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
 a {
-  color: var(--accent-cyan);
+  color: var(--color-accent);
   text-decoration: none;
-  transition: color var(--transition-speed) ease;
+  transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--accent-green);
+  color: var(--color-accent-hover);
 }
 
 img {
@@ -92,13 +106,11 @@ button {
   color: inherit;
 }
 
-ul,
-ol {
+ul, ol {
   list-style: none;
 }
 
-code,
-pre {
+code, pre {
   font-family: var(--font-mono);
 }
 
@@ -110,39 +122,103 @@ pre {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
+  background: var(--color-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
+  background: var(--color-border-hover);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary);
+  background: var(--color-accent);
 }
 
-/* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-color: var(--color-border-hover) var(--color-bg-secondary);
 }
 
 /* ---- Selection ---- */
 
 ::selection {
-  background: var(--selection-bg);
-  color: var(--selection-text);
+  background: var(--color-accent-glow);
+  color: var(--color-text-primary);
 }
 
-/* ---- Transition defaults ---- */
+/* ---- Animations ---- */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-accent-glow); }
+  50% { box-shadow: 0 0 40px var(--color-accent-glow); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 4px 15px var(--color-accent-glow), 0 0 20px var(--color-accent-glow); }
+  50% { box-shadow: 0 4px 25px var(--color-accent-glow), 0 0 40px var(--color-accent-glow); }
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.float-animation { animation: float 4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-pulse-glow,
+  .float-animation { animation: none; }
+}
+
+/* ---- Gradient Text ---- */
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-animated {
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover), var(--color-secondary), var(--color-accent));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* ---- Glow Effects ---- */
+
+.glow-accent {
+  box-shadow: 0 0 20px var(--color-accent-glow);
+}
+
+.glow-accent-strong {
+  box-shadow: 0 0 30px var(--color-accent-glow), 0 0 60px var(--color-accent-glow);
+}
+
+/* ---- Transition Defaults ---- */
 
 .theme-transition,
 .theme-transition *,
 .theme-transition *::before,
 .theme-transition *::after {
-  transition:
-    background-color var(--transition-speed) ease,
-    color var(--transition-speed) ease,
-    border-color var(--transition-speed) ease !important;
+  transition: background-color var(--transition-speed) ease,
+              color var(--transition-speed) ease,
+              border-color var(--transition-speed) ease,
+              box-shadow var(--transition-speed) ease !important;
 }

@@ -25,8 +25,8 @@ export function initSearchModal() {
     const modal = document.createElement("div");
     modal.style.cssText = `
       width: 100%; max-width: 520px; max-height: 60vh;
-      background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: var(--radius); overflow: hidden;
+      background: var(--bg-surface); border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm); overflow: hidden;
       display: flex; flex-direction: column;
       box-shadow: 0 16px 48px rgba(0,0,0,0.4);
     `;
@@ -35,7 +35,7 @@ export function initSearchModal() {
     input.className = "input";
     input.placeholder = "Search nodes...";
     input.style.cssText = `
-      border: none; border-bottom: 1px solid var(--border);
+      border: none; border-bottom: 1px solid var(--color-border);
       border-radius: 0; padding: 1rem;
       font-size: 1rem; background: transparent;
     `;
@@ -118,13 +118,13 @@ export function initSearchModal() {
           const row = document.createElement("a");
           row.href = `#/nodes/${encodeURIComponent(item.id || item.nodeId || "")}`;
           row.style.cssText = `
-            display:block; padding:0.625rem 0.75rem; border-radius:var(--radius);
-            color:var(--text-primary); font-size:0.875rem; text-decoration:none;
+            display:block; padding:0.625rem 0.75rem; border-radius:var(--radius-sm);
+            color:var(--color-text-primary); font-size:0.875rem; text-decoration:none;
           `;
           row.textContent = item.name || item.shortName || item.nodeId || "Unknown";
 
           row.addEventListener("mouseenter", () => {
-            row.style.backgroundColor = "var(--bg-elevated)";
+            row.style.backgroundColor = "var(--color-bg-tertiary)";
           });
           row.addEventListener("mouseleave", () => {
             row.style.backgroundColor = "transparent";

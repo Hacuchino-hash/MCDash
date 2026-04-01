@@ -64,7 +64,7 @@ function renderMessage(msg) {
   const row = document.createElement("div");
   row.style.cssText = `
     display:flex;gap:0.75rem;padding:0.5rem 0;
-    border-bottom:1px solid var(--border);font-size:0.8125rem;
+    border-bottom:1px solid var(--color-border);font-size:0.8125rem;
   `;
 
   const sender = document.createElement("span");
@@ -72,7 +72,7 @@ function renderMessage(msg) {
   sender.textContent = msg.sender || msg.from || "Unknown";
 
   const text = document.createElement("span");
-  text.style.cssText = "flex:1;color:var(--text-primary);word-break:break-word;";
+  text.style.cssText = "flex:1;color:var(--color-text-primary);word-break:break-word;";
   text.textContent = msg.text || msg.message || "";
 
   const time = document.createElement("span");
@@ -186,7 +186,7 @@ export async function mount(mountContainer) {
   messageList = document.createElement("div");
   messageList.style.cssText = `
     max-height:28rem;overflow-y:auto;
-    border:1px solid var(--border);border-radius:var(--radius);
+    border:1px solid var(--color-border);border-radius:var(--radius-sm);
     padding:0.75rem;background:var(--bg);
   `;
 

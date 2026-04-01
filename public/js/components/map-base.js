@@ -27,7 +27,7 @@ export function createMap(container, config = {}) {
   mapDiv.style.width = "100%";
   mapDiv.style.height = "100%";
   mapDiv.style.minHeight = "400px";
-  mapDiv.style.borderRadius = "var(--radius)";
+  mapDiv.style.borderRadius = "var(--radius-sm)";
   container.appendChild(mapDiv);
 
   const map = L.map(mapDiv, {

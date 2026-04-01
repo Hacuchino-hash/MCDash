@@ -30,7 +30,7 @@ function renderFeedItem(packet) {
   const item = document.createElement("div");
   item.style.cssText = `
     display:flex;align-items:center;gap:0.75rem;
-    padding:0.625rem 0;border-bottom:1px solid var(--border);
+    padding:0.625rem 0;border-bottom:1px solid var(--color-border);
     font-size:0.8125rem;
   `;
 
@@ -40,7 +40,7 @@ function renderFeedItem(packet) {
   badge.style.flexShrink = "0";
 
   const info = document.createElement("span");
-  info.style.cssText = "flex:1;color:var(--text-primary);";
+  info.style.cssText = "flex:1;color:var(--color-text-primary);";
   const src = packet.source || packet.from || "?";
   const dest = packet.destination || packet.to || "?";
   info.textContent = `${src} \u2192 ${dest}`;

@@ -102,7 +102,9 @@ function createWebSocketManager() {
     );
     reconnectAttempts += 1;
 
-    console.log(`[WS] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
+    console.log(
+      `[WS] Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`,
+    );
 
     reconnectTimer = setTimeout(() => {
       connect();
@@ -235,7 +237,8 @@ async function navigate() {
   }
 
   // Show loading spinner
-  container.innerHTML = '<div class="flex-center p-4"><div class="spinner"></div></div>';
+  container.innerHTML =
+    '<div class="flex-center p-4"><div class="spinner"></div></div>';
 
   try {
     const module = await match.loader();
@@ -280,22 +283,45 @@ function updateActiveNav(path) {
   });
 }
 
-// ---- Theme Toggle ----
+// ---- Theme Toggle (MT/MC) ----
+// MT = Meshtastic (emerald green, default)
+// MC = MeshCore (blue) via data-theme="mc"
 
 function initTheme() {
-  const saved = localStorage.getItem("nodakmesh-theme");
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = saved || (prefersDark ? "dark" : "light");
-  document.documentElement.setAttribute("data-theme", theme);
+  const saved = localStorage.getItem("theme");
+  if (saved === "mc") {
+    document.documentElement.setAttribute("data-theme", "mc");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  updateThemeToggleUI();
 }
 
-function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
+function updateThemeToggleUI() {
+  const isMC = document.documentElement.getAttribute("data-theme") === "mc";
+  const btnMT = document.getElementById("btn-mt");
+  const btnMC = document.getElementById("btn-mc");
 
+  if (btnMT) {
+    btnMT.className = "theme-toggle-btn" + (isMC ? "" : " active-mt");
+  }
+  if (btnMC) {
+    btnMC.className = "theme-toggle-btn" + (isMC ? " active-mc" : "");
+  }
+}
+
+function setTheme(theme) {
   document.documentElement.classList.add("theme-transition");
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("nodakmesh-theme", next);
+
+  if (theme === "mc") {
+    document.documentElement.setAttribute("data-theme", "mc");
+    localStorage.setItem("theme", "mc");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.removeItem("theme");
+  }
+
+  updateThemeToggleUI();
 
   setTimeout(() => {
     document.documentElement.classList.remove("theme-transition");
@@ -382,10 +408,10 @@ function init() {
   initTheme();
   initMobileMenu();
 
-  const themeToggle = document.getElementById("theme-toggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("click", toggleTheme);
-  }
+  const btnMT = document.getElementById("btn-mt");
+  const btnMC = document.getElementById("btn-mc");
+  if (btnMT) btnMT.addEventListener("click", () => setTheme("mt"));
+  if (btnMC) btnMC.addEventListener("click", () => setTheme("mc"));
 
   window.addEventListener("hashchange", navigate);
   navigate();
