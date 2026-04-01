@@ -20,11 +20,7 @@ export async function api(path, options = {}) {
   try {
     response = await fetch(url, config);
   } catch (err) {
-    throw new ApiError(
-      `Network error: unable to reach ${url}`,
-      0,
-      null,
-    );
+    throw new ApiError(`Network error: unable to reach ${url}`, 0, null);
   }
 
   let json;
@@ -94,8 +90,9 @@ export function getHealth() {
   return api("/health");
 }
 
-export function getLeaderboards(category) {
-  return api(`/leaderboards/${encodeURIComponent(category)}`);
+export function getLeaderboards(category, timeWindow) {
+  const params = timeWindow ? `?window=${encodeURIComponent(timeWindow)}` : "";
+  return api(`/leaderboards/${encodeURIComponent(category)}${params}`);
 }
 
 export function getCoverage() {
